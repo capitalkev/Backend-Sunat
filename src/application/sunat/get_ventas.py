@@ -1,14 +1,21 @@
-from transformers import Any
+from typing import Any
 
 from src.domain.interfaces import SunatInterface
 from src.domain.models import User
+from src.interfaces.dto.sunat_dto import FiltrosSunatParams, PaginacionParams
 
 
 class GetVentas:
-    def __init__(self, repository: SunatInterface):
+    def __init__(self, repository: SunatInterface) -> None:
         self.repository = repository
 
-    def execute(self, user_session: User, filtros, paginacion):
+    def execute(
+        self,
+        user_session: User,
+        filtros: FiltrosSunatParams,
+        paginacion: PaginacionParams,
+    ) -> dict[str, Any]:
+
         usuario_emails = filtros.usuario_emails
         if not user_session.is_admin():
             usuario_emails = [user_session.email]

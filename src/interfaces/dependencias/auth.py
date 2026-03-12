@@ -1,3 +1,5 @@
+from typing import Callable
+
 from fastapi import Depends, Header, HTTPException
 from firebase_admin import auth
 from sqlalchemy import text
@@ -37,10 +39,10 @@ def get_current_user(
         )
 
     except Exception as e:
-        raise HTTPException(status_code=401, detail=f"Token inválido: {e!s}")
+        raise HTTPException(status_code=401, detail=f"Token inválido: {e!s}") from None
 
 
-def require_roles(allowed_roles: list[str]):
+def require_roles(allowed_roles: list[str]) -> Callable[[User], User]:
     def role_checker(current_user: User = Depends(get_current_user)) -> User:
         if current_user.rol not in allowed_roles:
             raise HTTPException(status_code=403, detail="Permisos insuficientes")
