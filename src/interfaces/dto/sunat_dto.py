@@ -11,7 +11,7 @@ class FiltrosSunatParams:
         fecha_hasta: str | None = Query(None),
         moneda: list[str] | None = Query(
             None, alias="monedas"
-        ),  # alias por si el frontend manda "monedas"
+        ),
         rucs_empresa: list[str] | None = Query(None),
         usuario_emails: list[str] | None = Query(None),
     ):

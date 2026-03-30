@@ -20,7 +20,7 @@ class GetVentas:
         if not user_session.is_admin():
             usuario_emails = [user_session.email]
 
-        return self.repository.get_ventas_sire(
+        return self.repository.get_ventas_sunat(
             ruc_empresa=filtros.rucs_empresa,
             fecha_inicio=filtros.fecha_desde,
             fecha_fin=filtros.fecha_hasta,

@@ -10,7 +10,7 @@ class OperacionesRepository(SunatInterface):
     def __init__(self, db: Session):
         self.db = db
 
-    def get_ventas_sire(
+    def get_ventas_sunat(
         self,
         ruc_empresa: list[str] | None,
         fecha_inicio: str | None,
@@ -22,12 +22,12 @@ class OperacionesRepository(SunatInterface):
         sort_by: str = "fecha",
     ) -> dict[str, Any]:
         base_query = """
-            FROM ventas_sire f
+            FROM ventas_sunat f
             JOIN enrolados en ON f.ruc = en.ruc
-            LEFT JOIN ventas_sire nc 
-                ON f.ruc = nc.ruc 
+            LEFT JOIN ventas_sunat nc
+                ON f.ruc = nc.ruc
                 AND f.nro_cp_inicial = CAST(CAST(CAST(nc.nro_cp_modificado AS FLOAT) AS INT) AS VARCHAR)
-                AND f.serie_cdp = nc.serie_cp_modificado 
+                AND f.serie_cdp = nc.serie_cp_modificado
                 AND nc.tipo_cp_doc = '7'
             WHERE f.tipo_cp_doc = '1'
         """
@@ -107,15 +107,15 @@ class OperacionesRepository(SunatInterface):
         usuario_emails: list[str] | None = None,
     ) -> dict[str, Any]:
         query_str = """
-                SELECT 
+                SELECT
                     f.moneda,
                     COUNT(f.id) as cantidad,
                     SUM(f.total_cp + COALESCE(nc.total_cp, 0)) as total_facturado,
                     SUM(CASE WHEN f.estado1 = 'Ganada' THEN (f.total_cp + COALESCE(nc.total_cp, 0)) ELSE 0 END) as monto_ganado,
                     SUM(CASE WHEN f.estado1 IN ('Sin gestión', 'Gestionando') THEN (f.total_cp + COALESCE(nc.total_cp, 0)) ELSE 0 END) as monto_disponible
-                FROM ventas_sire f
+                FROM ventas_sunat f
                 JOIN enrolados en ON f.ruc = en.ruc
-                LEFT JOIN ventas_sire nc
+                LEFT JOIN ventas_sunat nc
                     ON f.ruc = nc.ruc
                     AND f.nro_cp_inicial = CAST(CAST(CAST(nc.nro_cp_modificado AS FLOAT) AS INT) AS VARCHAR)
                     AND f.serie_cdp = nc.serie_cp_modificado
@@ -152,7 +152,6 @@ class OperacionesRepository(SunatInterface):
 
         result = self.db.execute(text(query_str), params)
 
-        # Estructura por defecto esperada por tu frontend
         metricas = {
             "PEN": {
                 "totalFacturado": 0,
@@ -181,18 +180,17 @@ class OperacionesRepository(SunatInterface):
 
         return metricas
 
-    def update_venta_estado(self, venta_id: str, estado: str) -> bool:
-        query_str = "UPDATE ventas_sire SET estado1 = :estado WHERE id = :id"
-        result = self.db.execute(text(query_str), {"estado": estado, "id": venta_id})
-        self.db.commit()
-        return result.rowcount > 0
+    def update_venta_estado(self, venta_id: str, estado: str) -> None:
+        query_str = "UPDATE ventas_sunat SET estado1 = :estado WHERE id = :id"
+        self.db.execute(text(query_str), {"estado": estado, "id": venta_id})
+        return self.db.commit()
 
     def get_empresas(
         self, usuario_emails: list[str] | None = None
     ) -> list[dict[str, str]]:
         query_str = """
             SELECT DISTINCT f.ruc, f.razon_social 
-            FROM ventas_sire f
+            FROM ventas_sunat f
             JOIN enrolados en ON f.ruc = en.ruc
             WHERE 1=1
         """

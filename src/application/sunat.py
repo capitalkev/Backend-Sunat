@@ -11,7 +11,7 @@ class SunatUseCases:
         if not user_session.is_admin():
             usuario_emails = [user_session.email]
 
-        return self.repo.get_ventas_sire(
+        return self.repo.get_ventas_sunat(
             ruc_empresa=filters.get("rucs_empresa"),
             fecha_inicio=filters.get("fecha_desde"),
             fecha_fin=filters.get("fecha_hasta"),

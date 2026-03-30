@@ -2,7 +2,7 @@ from typing import Any, Protocol
 
 
 class SunatInterface(Protocol):
-    def get_ventas_sire(
+    def get_ventas_sunat(
         self,
         ruc_empresa: list[str] | None,
         fecha_inicio: str | None,
@@ -25,7 +25,7 @@ class SunatInterface(Protocol):
         """Obtiene las métricas KPIs agrupadas por moneda (PEN, USD)"""
         ...
 
-    def update_venta_estado(self, venta_id: str, estado: str) -> bool:
+    def update_venta_estado(self, venta_id: str, estado: str) -> None:
         """Actualiza el estado1 de una factura"""
         ...
 
