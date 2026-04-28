@@ -98,7 +98,7 @@ class OperacionesRepository(SunatInterface):
             },
         }
 
-    def get_metricas_resumen(
+    def get_resumen_ventas(
         self,
         ruc_empresa: list[str] | None = None,
         fecha_inicio: str | None = None,
@@ -107,24 +107,23 @@ class OperacionesRepository(SunatInterface):
         usuario_emails: list[str] | None = None,
     ) -> dict[str, Any]:
 
-        # Query limpio sin la lógica de "estado"
         query_str = """
-                SELECT
-                    f.moneda,
-                    COUNT(f.*) as cantidad,
-                    SUM(f.total_cp + COALESCE(nc.total_cp, 0)) as total_facturado
-                FROM ventas_sunat f
-                JOIN enrolados en ON f.ruc = en.ruc
-                LEFT JOIN ventas_sunat nc
-                    ON f.ruc = nc.ruc
-                    AND f.nro_cp_doc = nc.nro_cp_modificado
-                    AND f.serie_cdp = nc.serie_cp_modificado
-                    AND nc.tipo_cp_doc = '07'
-                WHERE f.tipo_cp_doc = '01'
-            """
+                    SELECT
+                        f.moneda,
+                        COUNT(f.*) as cantidad,
+                        SUM(f.total_cp + COALESCE(nc.total_cp, 0)) as total_facturado
+                    FROM ventas_sunat f
+                    JOIN enrolados en ON f.ruc = en.ruc
+                    LEFT JOIN ventas_sunat nc
+                        ON f.ruc = nc.ruc
+                        AND f.nro_cp_doc = nc.nro_cp_modificado
+                        AND f.serie_cdp = nc.serie_cp_modificado
+                        AND nc.tipo_cp_doc = '07'
+                    WHERE f.tipo_cp_doc = '01'
+                """
 
         params = {}
-        # Filtros para métricas
+        # Filtros
         if usuario_emails:
             p_emails = ", ".join([f":email_{i}" for i in range(len(usuario_emails))])
             query_str += f" AND en.email IN ({p_emails})"
@@ -152,20 +151,21 @@ class OperacionesRepository(SunatInterface):
 
         result = self.db.execute(text(query_str), params)
 
-        metricas = {
+        # CAMBIADO: variables "metricas" a "totales"
+        totales = {
             "PEN": {"totalFacturado": 0, "cantidad": 0},
             "USD": {"totalFacturado": 0, "cantidad": 0},
         }
 
         for row in result.mappings():
             moneda = row["moneda"]
-            if moneda in metricas:
-                metricas[moneda] = {
+            if moneda in totales:
+                totales[moneda] = {
                     "totalFacturado": float(row["total_facturado"] or 0),
                     "cantidad": row["cantidad"],
                 }
 
-        return metricas
+        return totales
 
     def get_empresas(
         self, usuario_emails: list[str] | None = None
@@ -184,7 +184,11 @@ class OperacionesRepository(SunatInterface):
                 params[f"email_{i}"] = email
 
         result = self.db.execute(text(query_str), params)
+
         return [
-            {"ruc": row["ruc"], "razon_social": row["razon_social"]}
+            {
+                "ruc": row["ruc"] or "",
+                "razon_social": row["razon_social"] or "Sin Nombre",
+            }
             for row in result.mappings()
         ]

@@ -14,7 +14,7 @@ class SunatInterface(Protocol):
         sort_by: str,
     ) -> dict[str, Any]: ...
 
-    def get_metricas_resumen(
+    def get_resumen_ventas(
         self,
         ruc_empresa: list[str] | None,
         fecha_inicio: str | None,
